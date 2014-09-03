@@ -1,0 +1,115 @@
+# This is a recipe; not a script. You should try to run it part by part.
+# The shebang is only for syntax highlight
+#!/usr/bin/env bash
+
+# Chroot 
+## Please, run this right after running script 00
+mount -o defaults,noatime,compress=lzo,autodefrag,subvol=root /dev/vda4 /mnt/gentoo
+
+## create dirs for mounts
+cd /mnt/gentoo
+mkdir srv home root var boot
+
+## mount
+mount -o defaults,noatime,compress=lzo,autodefrag,subvol=home /dev/vda4 /mnt/gentoo/home
+mount -o defaults,noatime,compress=lzo,autodefrag,subvol=srv /dev/vda4 /mnt/gentoo/srv
+mount -o defaults,noatime,compress=lzo,autodefrag,subvol=var /dev/vda4 /mnt/gentoo/var
+mount -o defaults,noatime /dev/vda2 /mnt/gentoo/boot
+
+## get gentoo stage3
+curl -O http://ftp.osuosl.org/pub/gentoo/gentoo-current/x86-64bit/amd64-k10/stage3-latest.tar.xz
+
+## uncompress
+tar -xapf stage3-latest.tar.xz
+rm -f stage3-latest.tar.xz
+
+## mount proc, sys and dev
+mount -t proc none proc
+mount --rbind /sys sys
+mount --rbind /dev dev
+
+## activate swap
+swapon /dev/vda3
+
+## get dns
+cp -u /etc/resolv.conf /mnt/gentoo/etc/
+
+## chroot
+env -i HOME=/root TERM=$TERM chroot . bash -l
+
+## mtab
+cat /proc/mounts > /etc/mtab
+
+## emerge
+emerge --sync
+emerge --oneshot portage
+
+## environment
+update-env
+source /etc/profile
+export PS1="(chroot) $PS1"
+
+
+# Setup
+cat << 'EOF' > /etc/fstab
+# <fs>    		<mountpoint>    <type>	<opts>          									<dump/pass>
+
+shm				/dev/shm		tmpfs	nodev,nosuid,noexec									0 0
+
+/dev/vda4		/ 				btrfs 	rw,noatime,compress=lzo,autodefrag,subvol=root 		0 0
+/dev/vda4		/home 			btrfs 	rw,noatime,compress=lzo,autodefrag,subvol=home 		0 0
+/dev/vda4		/srv 			btrfs 	rw,noatime,compress=lzo,autodefrag,subvol=srv 		0 0
+/dev/vda4		/var 			btrfs 	rw,noatime,compress=lzo,autodefrag,subvol=var 		0 0
+/dev/vda3		none			swap	sw													0 0
+/dev/vda2 		/boot 			btrfs 	rw,noatime 											0 0
+
+EOF
+
+# local time in MX
+ln -sf /usr/share/zoneinfo/America/Mexico_City /etc/localtime
+
+# append to my make.conf
+cat << EOF >> /etc/portage/make.conf
+
+ACCEPT_KEYWORDS="~amd64"
+MAKEOPTS="-j$(( 1 + 1 + $( lscpu -p | tail -n 1 | cut -d ',' -f 1 ) ))"
+
+REMOVE="-alsa -cgi -gnome -gtk -hal -kde -oss-kdeenablefinal -ldap -oss -qt3 -qt3support -qt4 -qt5 -X"
+ADD="bash-completion ruby symlink unicode vim-syntax"
+USE="${REMOVE} ${ADD}"
+
+# Portage Opts
+FEATURES="parallel-fetch ccache"
+AUTOCLEAN="yes"
+
+EOF
+
+# enable hardened profile
+eselect profile set-flavor 10
+
+# enable ccache and update everything
+emerge ccache
+emerge -j -uDN @world
+emerge --depclean
+
+# install commonly used tools
+emerge -j -DN vim bash-completion app-shells/gentoo-bashcomp app-admin/eselect-bashcomp btrfs-progs app-portage/eix app-portage/gentoolkit sys-process/htop sys-process/glances sys-process/lsof
+eselect bashcomp enable --global gentoo
+
+# install vanilla sources
+emerge -jN genkernel sys-kernel/vanilla-sources
+
+# Remember to enable:
+# 	* all virtio devices; at least: virtio_pci and virtio_blk
+#	* btrfs support
+cd /usr/src/linux
+make localmodconfig
+genkernel --menuconfig --oldconfig --all-ramdisk-modules --kernel-config=/usr/src/linux/.config --install all
+
+emerge grub
+grub2-install --no-floppy /dev/vda
+grub2-mkconfig -o /boot/grub/grub.cfg
+
+passwd
+
+exit 0

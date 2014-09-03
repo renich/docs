@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+set -ev
+umask 007
+
+#
+## Settings
+WORKING_PATH=${1:-~/tmp/git-deploys}
+WORKING_PATH=$(realpath ${WORKING_PATH})
+
+SRV1_PATH=${2:-srv1.example.tld}
+SRV1_PATH=${WORKING_PATH}/${SRV1_PATH}
+
+WRK1_PATH=${3:-wrk1.example.tld}
+WRK1_PATH=${WORKING_PATH}/${WRK1_PATH}
+
+
+GITTERS_USERS='user developer1 developer2 developer3'
+DEPLOYERS_USERS='user lead1 lead2'
+
+# Press <enter> to continue or <ctrl> + c to cancel...
+read
+
+
+#
+## General setup
+# create example directory structure
+# it set's up a workstation and a server.
+mkdir -p ${SRV1_PATH}/{var/lib/git/{repos,deploys},srv/www/html/mywebsite.tld/default/public}
+mkdir -p ${WRK1_PATH}/{home/user,srv/www/html/mywebsite.tld/default/public}
+
+# setup groups
+# groupadd gitters
+# groupadd deployers
+
+# for user in ${GITTERS_USERS}; do
+#     usermod -aG gitters ${user}
+# done
+
+# for user in ${DEPLOYERS_USERS}; do
+#     usermod -aG deployers ${user}
+# done
+
+# Note:
+# Once the gorups are created, a user can join a group by using
+#   newgrp <group-name>
+
+# fix permissions
+chmod -R 2770 ${SRV1_PATH}/var/lib/git/{repos,deploys}
+chgrp -R gitters ${SRV1_PATH}/var/lib/git/
+chgrp -R deployers ${SRV1_PATH}/var/lib/git/deploys
+
+
+#
+## Workstation setup
+# go to workstation
+cd ${WRK1_PATH}/
+
+# create a website
+cd srv/www/html/mywebsite.tld/default/public
+
+cat << EOF > ./index.html
+<html>
+    <head>
+        <title>My Website | index</title>
+    </head>
+
+    <body>
+        <header>
+            <h1>My Website</h1>
+        </header>
+
+        <section id='content'>
+            <article>
+                <h1>Hello</h1>
+
+                <p>
+                    Welcome to my website.
+                </p>
+            </article>
+        </section>
+
+        <footer>
+            <small>2013</small>
+            <small>|</small>
+            <small>HTML5</small>
+        </footer>
+    </body>
+</html>
+EOF
+
+# start a git repo and commit
+cd ..
+git init .
+git add .
+git commit -a -m 'first commit'
+
+# create a bare clone of it
+cd ..
+git clone --bare ./default mywebsite.tld.git
+
+# move that into the server so you have a remote repository
+# let's just imagine we used rsync/ssh or scp here.
+# It is important to keep the permissions as they should be.
+# A good idea is to set the umask in the remote server to 007 when copying the repo
+mv mywebsite.tld.git ${SRV1_PATH}/var/lib/git/repos/.
+
+# add the remote and push; setting the current branch (master) as upstream in the process.
+cd default
+git remote add origin ${SRV1_PATH}/var/lib/git/repos/mywebsite.tld.git
+
+# add the deploy remote
+git remote add deploy.production.mywebsite.tld ${SRV1_PATH}/var/lib/git/deploys/production.mywebsite.tld.deploy
+
+# push changes and set upstream branch
+git push -u origin master
+
+# create a symlink to the local document root for the user (for convenience)
+cd ${WRK1_PATH}
+cd home/user
+mkdir -p Projects/websites/html
+cd Projects/websites/html
+ln -s ../../../../../srv/www/html/mywebsite.tld .
+
+
+#
+## Server setup
+# go to server
+cd ${SRV1_PATH}
+cd var/lib/git/deploys
+
+# create a deploy directory structure
+mkdir production.mywebsite.tld.deploy
+cd production.mywebsite.tld.deploy
+
+# create a bare git repository
+git init --bare .
+
+# create the post-receive hook
+cat << EOF > hooks/post-receive
+#!/usr/bin/env bash
+
+GIT_WORK_TREE=${SRV1_PATH}/srv/www/html/mywebsite.tld/default git checkout -f
+EOF
+
+# fix hook permissions
+chmod 770 hooks/post-receive
+
+
+#
+## Testing
+# to to workstation
+cd ${WRK1_PATH}
+cd home/user/Projects/websites/html/mywebsite.tld/default
+
+# carry out first deploy
+git push -u deploy.production.mywebsite.tld master
+
+
+#
+## Cleanup
+# Cleanup commands. Pleae, review closely!
+
+# rm -fr ${SRV1_PATH}
+# rm -fr ${WRK1_PATH}
+# rmdir ${WORKING_PATH}
+
+# Press <enter> to cleanup or <ctrl> + c to leave example setup.
+read
+
+# Are you sure? Last chance!!
+read
+
+# execute cleanup
+rm -fr ${SRV1_PATH}
+rm -fr ${WRK1_PATH}
+rmdir ${WORKING_PATH}
+
+exit 0

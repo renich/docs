@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+git gc --aggressive --prune=now
+
+exit 0

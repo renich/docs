@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# create partitions
+gdisk -Z /dev/vda
+gdisk -o /dev/vda
+sgdisk -n 1::+3M -t 1:ef02 /dev/vda
+sgdisk -n 2::+500M -t 2:8300 /dev/vda
+sgdisk -n 3::+512M -t 3:8200 /dev/vda
+sgdisk -n 4:: -t 4:8300 /dev/vda
+
+# create filesystems
+mkfs -t btrfs -f -L boot /dev/vda2
+mkfs -t btrfs -f -L btrfsroot /dev/vda4
+mkswap /dev/vda3
+
+# create subvols
+mkdir /mnt/gentoo
+mount /dev/vda4 /mnt/gentoo
+cd /mnt/gentoo
+btrfs subvol create root
+btrfs subvol create home
+btrfs subvol create srv
+btrfs subvol create var
+
+# unmount
+cd ..
+umount gentoo
+
+exit 0

@@ -1,0 +1,9 @@
+# Test for a user using fake SMTP connection
+exim -d -bh 127.0.0.1
+
+EHLO mail1.ecoweb.com.mx
+MAIL FROM:<user@realdomain>
+RCPT TO:<user@localdomain>
+
+# validate user
+exim -bt -d user@localdomain

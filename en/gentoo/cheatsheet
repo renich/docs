@@ -1,0 +1,3 @@
+# emerge
+## rebuild toolchain (everything?)
+emerge --sync && emerge -1 glibc && emerge -uNDav @world

@@ -1,0 +1,202 @@
+===================
+Manejo de paquetes
+===================
+
+Yum y su magia
+---------------
+::
+
+Actualizaciones
+~~~~~~~~~~~~~~~
+Checar sin instalar
+    yum check-update
+
+Llevarlas a cabo
+    yum upgrade
+    yum upgrade-to bash-4.2.29-2
+
+
+Downgrades
+    yum downgrade bash
+    yum downgrade-to bash-4.2.29-2
+
+Syncronización
+    yum distro-sync
+
+Actualizacion local
+    yum localupdate /home/renich/rpmbuild/results
+
+
+Búsquedas y listados
+~~~~~~~~~~~~~~~~~~~~
+Buscar términos varios
+    yum search Zendframework php-fpm nginx
+
+Buscar en la cache
+    yum -C search bash
+
+Listar paquetes
+    yum list "kernel*"
+    yum list installed "kernel*"
+    yum list available "kernel*"
+
+Listar grupos y sus nombres cortos
+    yum -v grouplist
+
+Listar repositorios
+    yum repolist
+
+
+Instalaciones
+~~~~~~~~~~~~~
+Instalar paquetes
+    yum install "php-Zend*"
+    yum install /usr/bin/autojump
+    yum install /usr/lib64/libtxc_dxtn.so
+
+Instalar grupos
+    yum groupinstall "Fedora Packager"
+    yum install @web-development
+
+Reinstalar paquetes
+    yum reinstall nginx
+
+Instalación local
+    yum localinstall /home/renich/rpmbuild/results/php*.rpm
+    yum localinstall http://download1.rpmfusion.org/nonfree/fedora/releases/17/Everything/x86_64/os/rpmfusion-nonfree-release-17.0.3-1.noarch.rpm
+
+
+Historial
+~~~~~~~~~
+Listar transacciones
+    yum history list
+
+Resumen
+    yum history summary
+    yum history summary 4
+
+Información sobre transacciones
+    yum history info 4
+    yum history info 40..45
+    yum history addon-info 50
+    yum history addon-info last
+
+Listado de paquetes en transacciones
+    yum history package-list "bash*"
+
+Undo y Redo
+    yum history undo last
+    yum history redo last
+    
+Inicializando
+    yum history new
+
+
+Reposotiorios
+~~~~~~~~~~~~~~
+Instalar un repositorio
+    yum-config-manager --add-repo http://repos.fedorapeople.org/repos/bioinfornatics/0ad/fedora-0ad.repo
+
+Habilitar y desabilitar
+    yum-config-manager --enable rpmfusion-free
+    yum-config-manager --disable "rpmfusion-*"
+
+Limpieza
+    yum clean all
+    yum clean expire-cache
+    yum clean packages
+    yum clean headers
+    yum clean metadata
+    yum clean dbcache
+    yum clean rpmdb
+    yum clean plugins
+
+
+Plugins
+~~~~~~~
+Recomendados por mi
+    yum install yum-plugin-fastestmirror yum-plugin-merge-conf yum-plugin-post-transaction-actions yum-plugin-remove-with-leaves yum-plugin-security 
+
+Actualización mínima
+    yum update-minimal
+    
+Updates sobre bugzilla id
+    yum --security --bz 488901 --bz 48987 --bz 48999 upgrade
+    
+Información
+    yum --security list bugzillas
+    yum updateinfo list all security
+    yum updateinfo FEDORA-2707-4567
+
+
+PackageKit
+----------
+::
+
+Información
+~~~~~~~~~~~
+Obtener listados, grupos, categorías, transacciones, actualizaciones y demás información del sistema
+    pkcon get-categories
+    pkcon get-groups
+    pkcon get-filters
+    pkcon get-transactions
+    pkcon get-updates
+    pkcon get-time update-system
+    pkcon get-distro-upgrades
+
+Obtener información sobre paquetes específicos
+    pkcon get-depends php
+    pkcon get-requires php
+    pkcon resolve yum
+    pkcon get-details bash
+    pkcon get-files nginx
+    pkcon get-update-detail php
+
+
+Buscar
+~~~~~~
+Buscar en diferentes niveles
+    pkcon search name bash
+    pkcon search details bash
+    pkcon search file /usr/bin/env
+
+
+Descargar
+~~~~~~~~~
+Descargar paquetes
+    pkcon download /home/renich/Downloads bash
+
+
+Instalar
+~~~~~~~~
+Remota
+    pkcon install nginx
+
+Local
+    pkcon install-local /home/renich/rpmbuild/results/php*
+
+
+Remover
+~~~~~~~~~~~
+Remover paquetes
+    pkcon remove php
+
+
+Actualizar
+~~~~~~~~~~
+Llevar acabo la actualización
+    pkcon update
+
+
+Repositorios y listas
+~~~~~~~~~~~~~~~~~~~~~
+Refrescar listas de paquetes
+    pkcon refresh
+
+Obtener la lista completa de paquetes
+    pkcon get-packages
+
+Transacciones sobre repositorios
+    pkcon repo-list
+    pkcon repo-enable
+    pkcon repo-disable

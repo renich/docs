@@ -1,0 +1,20 @@
+# These settings were set by the metro build script that automatically built this stage.
+# Please consult /etc/make.conf.example for a more detailed example.
+
+CFLAGS="-mtune=native -O2 -pipe"
+CXXFLAGS=${CFLAGS}
+CHOST="x86_64-pc-linux-gnu"
+
+ACCEPT_KEYWORDS="~amd64"
+MAKEOPTS="-j$(( 1 + 1 + $( lscpu -p | tail -n 1 | cut -d ',' -f 1 ) ))"
+
+REMOVE="-alsa -cgi -gnome -gtk -hal -kde -oss-kdeenablefinal -ldap -oss -qt3 -qt3support -qt4 -qt5 -X"
+ADD="bash-completion ruby21 symlink unicode vim-syntax"
+USE="${REMOVE} ${ADD}"
+
+# Portage Opts
+AUTOCLEAN="yes"
+FEATURES="parallel-fetch ccache"
+
+# Ruby
+RUBY_TARGETS="ruby21"
