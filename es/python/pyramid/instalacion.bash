@@ -11,8 +11,5 @@ source ./bin/activate
 # instalar setuptools en el ambiente virtual
 curl https://bootstrap.pypa.io/ez_setup.py | python
 
-# instalar pip
-easy_install pip
-
 # instalar Pyramid
 easy_install 'pyramid==1.5.1'
