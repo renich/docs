@@ -103,7 +103,7 @@ Controlador
     :start-at: # controlador
 
 Bueno, primero, instanciamos a Configurator_ y le agregamos la ruta llamada 'hola'; indicándole que todo lo que pongamos después de
-'/hola/' será parámetros. La ruta será accesible en '/hole'.
+'/hola/' será parámetros. La ruta será accesible en '/hola'.
 
 Luego, agregamos la vista y se la asignamos a la ruta 'hola'.
 
