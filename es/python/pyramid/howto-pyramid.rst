@@ -5,8 +5,9 @@ HowTo: Pyramid
 Instalación y Uso de Pyramid (framework)
 ----------------------------------------
 
-:Autor: 
+:Autores: 
     Renich Bon Ciric <renich@woralelandia.com>
+    Sergio Ezequiel Gutiérrez Álvarez <ark.sega@gmail.com>
 
 :Licencia: 
     FDL_ 1.3 o >
